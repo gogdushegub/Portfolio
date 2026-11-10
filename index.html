@@ -117,11 +117,18 @@ header{background:var(--bg);position:relative;z-index:2}
 .side::after{opacity:.55}
 @media(max-width:720px){.tile{width:72cqw;aspect-ratio:4/3}}
 figure img{cursor:zoom-in}
-.lbx{position:fixed;inset:0;z-index:100;background:rgba(2,6,3,.95);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:48px 16px 20px;cursor:zoom-out;touch-action:pinch-zoom}
-.lbx img{max-width:100%;max-height:calc(100vh - 120px);object-fit:contain;box-shadow:0 0 0 1px var(--ln)}
-.lbx p{margin:0;max-width:60em;text-align:center;font-size:15px;color:#a8a593}
-.lbx button{position:absolute;top:10px;right:14px;width:40px;height:40px;background:none;border:1px solid var(--ln);color:var(--g);font:26px/1 serif;cursor:pointer}
+.lbx{position:fixed;inset:0;z-index:100;background:rgba(2,6,3,.96);display:flex;flex-direction:column;overscroll-behavior:contain}
+.lbx .x{position:absolute;top:10px;right:14px;z-index:2}
+.lbx .stg{flex:1;min-height:0;margin-top:56px;display:flex;align-items:center;justify-content:center;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none}
+.lbx .stg img{max-width:100%;max-height:100%;object-fit:contain;will-change:transform;-webkit-user-drag:none;user-select:none;cursor:zoom-in}
+.lbx .bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px))}
+.lbx .bar p{margin:0;flex:1 1 240px;font-size:15px;color:#a8a593}
+.lbx .zc{display:flex;gap:6px;align-items:center;margin-left:auto}
+.lbx button{min-width:40px;height:40px;padding:0 10px;background:rgba(8,12,9,.85);border:1px solid var(--ln);color:var(--g);font:22px/1 serif;cursor:pointer}
 .lbx button:hover,.lbx button:focus-visible{border-color:var(--g)}
+.lbx button:disabled{opacity:.35;cursor:default;border-color:var(--ln)}
+.lbx .fit{font:13px "JetBrains Mono",ui-monospace,monospace;letter-spacing:.04em}
+.lbx .zl{min-width:46px;text-align:center;color:#a8a593;font:13px "JetBrains Mono",ui-monospace,monospace}
 </style></head><body>
 <div class="side l" aria-hidden="true"></div><div class="side r" aria-hidden="true"></div>
 <header><a href="#/"><b>H. Andruskyi</b><span class="mono">portfolio</span></a><nav><a href="#/">Stream</a><a href="#/portfolio">Portfolio</a><a href="#/about">About</a></nav></header>
@@ -243,16 +250,44 @@ const mx=2*hf-c.clientWidth-2;if(pos>=mx)pos-=hf;if(pos<=2)pos+=hf;c.scrollLeft=
 function err(e){document.getElementById("app").innerHTML='<div class="wrap"><p>Something went wrong loading this page: '+e.message+"</p></div>"}
 addEventListener("hashchange",()=>{try{route()}catch(e){err(e)}});try{route()}catch(e){err(e)}
 
-// ===== image lightbox =====
-(()=>{let box=null,prev=null;
-const close=()=>{if(!box)return;box.remove();box=null;document.body.style.overflow="";if(prev&&prev.focus)prev.focus()};
+// ===== image lightbox with zoom and pan =====
+(()=>{let box=null,prev=null,st=null;const MAXS=5;
+const close=()=>{if(!box)return;document.removeEventListener("keydown",key);box.remove();box=null;st=null;document.body.style.overflow="";if(prev&&prev.focus)prev.focus()};
+const ctr=()=>{const r=st.stage.getBoundingClientRect();return[r.left+r.width/2,r.top+r.height/2]};
+const clamp=()=>{const s=st.s,mx=Math.max(0,(st.img.offsetWidth*s-st.stage.clientWidth)/2),my=Math.max(0,(st.img.offsetHeight*s-st.stage.clientHeight)/2);
+ st.tx=Math.min(mx,Math.max(-mx,st.tx));st.ty=Math.min(my,Math.max(-my,st.ty));if(s<=1.001){st.tx=0;st.ty=0}};
+const apply=()=>{clamp();st.img.style.transform="translate("+st.tx+"px,"+st.ty+"px) scale("+st.s+")";st.img.style.cursor=st.s>1?"grab":"zoom-in";
+ st.lab.textContent=Math.round(st.s*100)+"%";st.out.disabled=st.s<=1.001;st.inn.disabled=st.s>=MAXS-.001;st.fit.disabled=st.s<=1.001};
+const zoomAt=(cx,cy,ns)=>{ns=Math.min(MAXS,Math.max(1,ns));const k=ns/st.s;st.tx=cx-(cx-st.tx)*k;st.ty=cy-(cy-st.ty)*k;st.s=ns;apply()};
+const reset=()=>{st.s=1;st.tx=0;st.ty=0;apply()};
+function key(e){if(!st)return;const k=e.key;
+ if(k==="Escape")close();else if(k==="+"||k==="=")zoomAt(0,0,st.s*1.5);else if(k==="-"||k==="_")zoomAt(0,0,st.s/1.5);else if(k==="0")reset();
+ else if(st.s>1&&k.indexOf("Arrow")===0){e.preventDefault();const d=60;if(k==="ArrowLeft")st.tx+=d;if(k==="ArrowRight")st.tx-=d;if(k==="ArrowUp")st.ty+=d;if(k==="ArrowDown")st.ty-=d;apply()}}
+const mk=(tag,cls,txt,lab)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;if(lab){e.setAttribute("aria-label",lab);if(tag==="button"){e.type="button";e.title=lab}}return e};
 const open=im=>{close();prev=document.activeElement;const cap=im.closest("figure")&&im.closest("figure").querySelector("figcaption");
-box=document.createElement("div");box.className="lbx";box.setAttribute("role","dialog");box.setAttribute("aria-modal","true");box.setAttribute("aria-label","Enlarged image");
-const i=document.createElement("img");i.src=im.currentSrc||im.src;i.alt=im.alt||"";
-const b=document.createElement("button");b.type="button";b.setAttribute("aria-label","Close");b.textContent="\u00d7";
-box.append(b,i);if(cap&&cap.textContent){const p=document.createElement("p");p.textContent=cap.textContent;box.append(p)}
-box.addEventListener("click",close);document.body.append(box);document.body.style.overflow="hidden";b.focus()};
+ box=mk("div","lbx");box.setAttribute("role","dialog");box.setAttribute("aria-modal","true");box.setAttribute("aria-label","Enlarged image");
+ const x=mk("button","x","\u00d7","Close"),stage=mk("div","stg"),img=document.createElement("img");img.src=im.currentSrc||im.src;img.alt=im.alt||"";img.draggable=false;stage.append(img);
+ const bar=mk("div","bar"),zc=mk("div","zc"),out=mk("button",null,"\u2212","Zoom out"),lab=mk("span","zl","100%"),inn=mk("button",null,"+","Zoom in"),fit=mk("button","fit","Fit","Fit to screen");
+ zc.append(out,lab,inn,fit);if(cap&&cap.textContent)bar.append(mk("p",null,cap.textContent));bar.append(zc);box.append(x,stage,bar);
+ st={s:1,tx:0,ty:0,img,stage,lab,out,inn,fit};
+ x.addEventListener("click",close);out.addEventListener("click",()=>zoomAt(0,0,st.s/1.5));inn.addEventListener("click",()=>zoomAt(0,0,st.s*1.5));fit.addEventListener("click",reset);
+ const P=new Map();let moved=0,t0=0,onImg=false,lastD=0,lastM=null,lastClick=0;
+ const two=()=>{const a=[...P.values()];return{d:Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y)||1,x:(a[0].x+a[1].x)/2,y:(a[0].y+a[1].y)/2}};
+ stage.addEventListener("pointerdown",e=>{if(e.pointerType==="mouse"&&e.button!==0)return;try{stage.setPointerCapture(e.pointerId)}catch(_){}
+  P.set(e.pointerId,{x:e.clientX,y:e.clientY});if(P.size===1){moved=0;t0=Date.now();onImg=e.target===img}else if(P.size===2){moved=99;const q=two();lastD=q.d;lastM=q}});
+ stage.addEventListener("pointermove",e=>{const p=P.get(e.pointerId);if(!p)return;const dx=e.clientX-p.x,dy=e.clientY-p.y;p.x=e.clientX;p.y=e.clientY;
+  if(P.size===1){moved+=Math.abs(dx)+Math.abs(dy);if(st.s>1&&moved>3){st.tx+=dx;st.ty+=dy;apply()}}
+  else if(P.size===2){const q=two(),[cx,cy]=ctr();if(lastM){st.tx+=q.x-lastM.x;st.ty+=q.y-lastM.y;zoomAt(q.x-cx,q.y-cy,st.s*q.d/lastD)}lastD=q.d;lastM=q}});
+ const up=e=>{if(!P.has(e.pointerId))return;const was=P.size;P.delete(e.pointerId);
+  if(was===1&&e.type==="pointerup"&&moved<8&&Date.now()-t0<600){
+   if(!onImg)close();
+   else if(st.s<=1.001){const[cx,cy]=ctr();zoomAt(e.clientX-cx,e.clientY-cy,2.5);lastClick=Date.now()}
+   else if(Date.now()-lastClick>400)reset()}
+  if(P.size<2){lastD=0;lastM=null}if(P.size===1)moved=99};
+ stage.addEventListener("pointerup",up);stage.addEventListener("pointercancel",up);
+ stage.addEventListener("wheel",e=>{e.preventDefault();const[cx,cy]=ctr();zoomAt(e.clientX-cx,e.clientY-cy,st.s*Math.exp(-e.deltaY*(e.ctrlKey?.01:.0015)))},{passive:false});
+ window.addEventListener("resize",()=>{if(st)apply()});
+ document.addEventListener("keydown",key);document.body.append(box);document.body.style.overflow="hidden";apply();x.focus()};
 document.addEventListener("click",e=>{if(box)return;const im=e.target.closest&&e.target.closest("figure img");if(im&&!im.closest(".lbx")){e.preventDefault();open(im)}});
-document.addEventListener("keydown",e=>{if(e.key==="Escape")close()});
 window.addEventListener("hashchange",close);})();
 </script></body></html>
