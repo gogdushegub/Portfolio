@@ -116,6 +116,12 @@ header a .mono{margin-left:12px}
 header{background:var(--bg);position:relative;z-index:2}
 .side::after{opacity:.55}
 @media(max-width:720px){.tile{width:72cqw;aspect-ratio:4/3}}
+figure img{cursor:zoom-in}
+.lbx{position:fixed;inset:0;z-index:100;background:rgba(2,6,3,.95);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:48px 16px 20px;cursor:zoom-out;touch-action:pinch-zoom}
+.lbx img{max-width:100%;max-height:calc(100vh - 120px);object-fit:contain;box-shadow:0 0 0 1px var(--ln)}
+.lbx p{margin:0;max-width:60em;text-align:center;font-size:15px;color:#a8a593}
+.lbx button{position:absolute;top:10px;right:14px;width:40px;height:40px;background:none;border:1px solid var(--ln);color:var(--g);font:26px/1 serif;cursor:pointer}
+.lbx button:hover,.lbx button:focus-visible{border-color:var(--g)}
 </style></head><body>
 <div class="side l" aria-hidden="true"></div><div class="side r" aria-hidden="true"></div>
 <header><a href="#/"><b>H. Andruskyi</b><span class="mono">portfolio</span></a><nav><a href="#/">Stream</a><a href="#/portfolio">Portfolio</a><a href="#/about">About</a></nav></header>
@@ -209,9 +215,11 @@ const plate=(k,c)=>`<figure class="plate"><img src="${IMG[k]}" alt="${c}"><figca
 const FLOW=f=>{const q=(a,c)=>`<figure class="eq${c||""}"><img src="${IMG[a[0]]}" alt="${a[1]}" loading="lazy"><figcaption>${a[1]}</figcaption></figure>`;return `<h3>${f.h}</h3><div class="flow">${q(f.a)}<svg class="arr" viewBox="0 0 24 70" aria-hidden="true"><path d="M12 0v62M3 52l9 14 9-14" fill="none" stroke="#4fd67a" stroke-width="2"/></svg><div class="pair">${q(f.b)}<span class="plus mono">+</span>${q(f.c)}</div></div>`};
 const YT=v=>`<h3>${v[1]}</h3><div class="vid"><iframe src="https://www.youtube-nocookie.com/embed/${v[0]}" title="${v[1]}" loading="lazy" allow="fullscreen" allowfullscreen></iframe></div><p class="vc">${v[2]}</p><p><a class="ext" href="https://youtu.be/${v[0]}" target="_blank" rel="noopener">Open on YouTube</a></p>`;
 const COV={necro:"nh1",zlatna:"zn",byte:"c3",lisbon:"lp",microciv:"mo",other:"rv"};
-const tile=(p,d)=>`<a class="tile" href="#/${p.s}"${d?' tabindex="-1" aria-hidden="true"':""}><img src="${IMG[COV[p.s]]}" alt="${d?"":p.t}"><span>${p.t}</span></a>`;
+const CAR=[...P.filter(p=>COV[p.s]).map(p=>({h:"#/"+p.s,src:IMG[COV[p.s]],t:p.t})),{h:"#/other",src:IMG.in1,t:"Interior lighting study"},{h:"#/other",src:IMG.coinp,t:"Medieval coin"},{h:"#/motion",src:"img/lego.jpg",fb:"https://i.ytimg.com/vi/-DI-I1z_5SE/maxresdefault.jpg|https://i.ytimg.com/vi/-DI-I1z_5SE/hqdefault.jpg",t:"LEGO advertisement"}];
+const tfb=i=>{const q=(i.dataset.fb||"").split("|").filter(Boolean);if(q.length){i.dataset.fb=q.slice(1).join("|");i.src=q[0]}else i.parentNode.remove()};
+const tile=(c,d)=>`<a class="tile" href="${c.h}"${d?' tabindex="-1" aria-hidden="true"':""}><img src="${c.src}" alt="${d?"":c.t}"${c.fb?` data-fb="${c.fb}" onerror="tfb(this)"`:""}><span>${c.t}</span></a>`;
 const dial=`<svg class="dial" viewBox="0 0 240 240" aria-hidden="true"><circle cx="120" cy="120" r="112" fill="none" stroke="#4fd67a" stroke-width="2"/><g class="r"><circle cx="120" cy="120" r="94" fill="none" stroke="#2f8f4d" stroke-width="10" stroke-dasharray="2 8"/></g><circle cx="120" cy="120" r="76" fill="none" stroke="#4fd67a" stroke-width="1.5"/><path d="M120 62l50 29v58l-50 29-50-29V91z" fill="none" stroke="#2f8f4d" stroke-width="1.5"/><text x="120" y="138" text-anchor="middle" font-family="UnifrakturCook,serif" font-size="54" fill="#4fd67a">H</text></svg>`;
-function stream(){return `<div class="wrap"><section class="hero"><div><h1>Heorhii<small>(George)</small>Andruskyi</h1><p class="lead">I am a Creative Technologies student focused on 3D environment and prop creation, game development and interactive experiences. I enjoy building detailed environments with a strong sense of atmosphere, combining 3D modelling in Blender with real-time development in Unity.</p><p class="lead">Currently looking for an internship in Game Art, Environment Design, 3D Modelling or XR development in Belgium.</p><p class="seek">Internship search · Belgium · February to May or June 2027</p></div>${dial}</section><section class="car" aria-label="Projects"><div class="trk">${P.filter(p=>COV[p.s]).map(p=>tile(p)).join("")}${P.filter(p=>COV[p.s]).map(p=>tile(p,1)).join("")}</div></section></div>${portfolio()}${about()}`}
+function stream(){return `<div class="wrap"><section class="hero"><div><h1>Heorhii<small>(George)</small>Andruskyi</h1><p class="lead">I am a Creative Technologies student focused on 3D environment and prop creation, game development and interactive experiences. I enjoy building detailed environments with a strong sense of atmosphere, combining 3D modelling in Blender with real-time development in Unity.</p><p class="lead">Currently looking for an internship in Game Art, Environment Design, 3D Modelling or XR development in Belgium.</p><p class="seek">Internship search · Belgium · February to May or June 2027</p></div>${dial}</section><section class="car" aria-label="Projects"><div class="trk">${CAR.map(c=>tile(c)).join("")}${CAR.map(c=>tile(c,1)).join("")}</div></section></div>${portfolio()}${about()}`}
 function portfolio(){return `<div class="wrap"><h2 id="toc">Portfolio</h2>${P.map((p,i)=>`<a class="row" href="#/${p.s}"><span class="n">${R[i]}</span>${COV[p.s]?`<img class="th" src="${IMG[COV[p.s]]}" alt="">`:'<span class="th"></span>'}<span><b>${p.t}</b><small>${p.tag}</small></span><span class="st${p.wip?" wip-st":""}">${p.ls||p.st}</span></a>`).join("")}</div>`}
 const ic=(k,n)=>`<span class="sk"><img src="${IMG[k]}" alt="">${n}</span>`,am=(m,n)=>`<span class="sk"><i>${m}</i>${n}</span>`;
 const sg=(h,a)=>`<p class="mono skh">${h}</p><div class="chips">${a.join("")}</div>`,tx=n=>`<span>${n}</span>`,T=(...a)=>a.map(tx);
@@ -234,4 +242,17 @@ if(!rm&&t>hold)pos+=(hov?dir*340:36)*dt;
 const mx=2*hf-c.clientWidth-2;if(pos>=mx)pos-=hf;if(pos<=2)pos+=hf;c.scrollLeft=pos;raf=requestAnimationFrame(f)};raf=requestAnimationFrame(f)}
 function err(e){document.getElementById("app").innerHTML='<div class="wrap"><p>Something went wrong loading this page: '+e.message+"</p></div>"}
 addEventListener("hashchange",()=>{try{route()}catch(e){err(e)}});try{route()}catch(e){err(e)}
+
+// ===== image lightbox =====
+(()=>{let box=null,prev=null;
+const close=()=>{if(!box)return;box.remove();box=null;document.body.style.overflow="";if(prev&&prev.focus)prev.focus()};
+const open=im=>{close();prev=document.activeElement;const cap=im.closest("figure")&&im.closest("figure").querySelector("figcaption");
+box=document.createElement("div");box.className="lbx";box.setAttribute("role","dialog");box.setAttribute("aria-modal","true");box.setAttribute("aria-label","Enlarged image");
+const i=document.createElement("img");i.src=im.currentSrc||im.src;i.alt=im.alt||"";
+const b=document.createElement("button");b.type="button";b.setAttribute("aria-label","Close");b.textContent="\u00d7";
+box.append(b,i);if(cap&&cap.textContent){const p=document.createElement("p");p.textContent=cap.textContent;box.append(p)}
+box.addEventListener("click",close);document.body.append(box);document.body.style.overflow="hidden";b.focus()};
+document.addEventListener("click",e=>{if(box)return;const im=e.target.closest&&e.target.closest("figure img");if(im&&!im.closest(".lbx")){e.preventDefault();open(im)}});
+document.addEventListener("keydown",e=>{if(e.key==="Escape")close()});
+window.addEventListener("hashchange",close);})();
 </script></body></html>
